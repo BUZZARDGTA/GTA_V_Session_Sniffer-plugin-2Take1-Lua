@@ -215,9 +215,7 @@ mainLoopThread = create_tick_handler(function()
 
         local playerHexSCID = string.format("0x%x", playerSCID)
 
-        -- Iterate over each line in the file
         for line in fake_friends__content:gmatch("[^\r\n]+") do
-            -- Check if the line matches the pattern
             local username, hexSCID, hexFlag = line:match(FAKE_FRIENDS__ENTRY_PATTERN)
             if username then
                 if (
@@ -239,7 +237,6 @@ mainLoopThread = create_tick_handler(function()
             create_empty_file(LOG_PATH)
         end
 
-        -- Write new entries to log file
         local log_file, err = io.open(LOG_PATH, "a")
         if err then
             menu.notify("Oh no... Script crashed:(\nYou gotta restart it manually.", SCRIPT_NAME, 6, COLOR.RED)
@@ -247,13 +244,8 @@ mainLoopThread = create_tick_handler(function()
             return
         end
 
-        -- Build the log content as a single string
         local combined_entries = table.concat(player_entries_to_log, "\n")
-
-        -- Write the entire content to the log file
         log_file:write(combined_entries .. "\n")
-
-        -- Close the file
         log_file:close()
     end
 
@@ -264,7 +256,6 @@ mainLoopThread = create_tick_handler(function()
         local player_entries_to_log = {}
         local bailFromSession = false
 
-        -- Read current fake friends file content
         local fake_friends__content, err = read_file(FAKE_FRIENDS__PATH)
         if err then
             menu.notify("Oh no... Script crashed:(\nYou gotta restart it manually.", SCRIPT_NAME, 6, COLOR.RED)
@@ -272,7 +263,6 @@ mainLoopThread = create_tick_handler(function()
             return
         end
 
-        -- Read current log file content
         local log__content, err = read_file(LOG_PATH)
         if err then
             menu.notify("Oh no... Script crashed:(\nYou gotta restart it manually.", SCRIPT_NAME, 6, COLOR.RED)
