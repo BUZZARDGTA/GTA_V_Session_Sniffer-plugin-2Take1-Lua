@@ -180,7 +180,7 @@ settingBailOnFakeFriendJoinTimeout.on = false
 
 -- === Main Loop === --
 mainLoopThread = create_tick_handler(function()
-    local function loggerPreTask(players_to_log, playerID, playerName, playerSCID, playerIP, currentTimestamp)
+    local function loggerPreTask(player_entries_to_log, log__content, playerID, playerName, playerSCID, playerIP, currentTimestamp)
         if not player_join__timestamps[playerID] then
             player_join__timestamps[playerID] = os.time()
             return
@@ -199,13 +199,13 @@ mainLoopThread = create_tick_handler(function()
             return
         end
 
-        table.insert(players_to_log, {
-            ID = playerID,
-            Name = playerName,
-            SCID = playerSCID,
-            IP = playerIP,
-            Timestamp = currentTimestamp
-        })
+        local entry_pattern = string.format("user:(%s), scid:(%%d+), ip:(%s), timestamp:(%%d+)", escape_magic_characters(playerName), escape_magic_characters(playerIP))
+        if
+            not log__content:find("^" .. entry_pattern)
+            and not log__content:find("\n" .. entry_pattern)
+        then
+            table.insert(player_entries_to_log, string.format("user:%s, scid:%d, ip:%s, timestamp:%d", playerName, playerSCID, playerIP, currentTimestamp))
+        end
     end
 
     local function bailPreTask(fake_friends__content, playerName, playerSCID)
@@ -232,30 +232,9 @@ mainLoopThread = create_tick_handler(function()
         return false
     end
 
-    local function write_to_log_file(log__content, players_to_log)
+    local function write_to_log_file(log__content, player_entries_to_log)
         if not utils.file_exists(LOG_PATH) then
             create_empty_file(LOG_PATH)
-        end
-
-        -- Prepare entries to add
-        local entries_to_add = {}
-        for _, player in ipairs(players_to_log) do
-            system.yield()
-
-            local found_entry = false
-
-            local entry_pattern = string.format("user:(%s), scid:(%%d+), ip:(%s), timestamp:(%%d+)", escape_magic_characters(player.Name), escape_magic_characters(player.IP))
-            if
-                not log__content:find("^" .. entry_pattern)
-                and not log__content:find("\n" .. entry_pattern)
-            then
-                table.insert(entries_to_add, string.format("user:%s, scid:%d, ip:%s, timestamp:%d", player.Name, player.SCID, player.IP, player.Timestamp))
-            end
-        end
-
-        -- Check if there are entries to add; if not, exit early
-        if #entries_to_add <= 0 then
-            return
         end
 
         -- Write new entries to log file
@@ -267,7 +246,7 @@ mainLoopThread = create_tick_handler(function()
         end
 
         -- Build the log content as a single string
-        local combined_entries = table.concat(entries_to_add, "\n")
+        local combined_entries = table.concat(player_entries_to_log, "\n")
 
         -- Write the entire content to the log file
         log_file:write(combined_entries .. "\n")
@@ -280,7 +259,7 @@ mainLoopThread = create_tick_handler(function()
         network.is_session_started()
         and player.get_host() ~= -1
     then
-        local players_to_log = {}
+        local player_entries_to_log = {}
         local bailFromSession = false
 
         -- Read current fake friends file content
@@ -311,7 +290,7 @@ mainLoopThread = create_tick_handler(function()
                 local playerIP = dec_to_ipv4(player.get_player_ip(playerID))
                 local currentTimestamp = os.time()
 
-                loggerPreTask(players_to_log, playerID, playerName, playerSCID, playerIP, currentTimestamp)
+                loggerPreTask(player_entries_to_log, log__content, playerID, playerName, playerSCID, playerIP, currentTimestamp)
                 if
                     settingBailOnFakeFriendJoinTimeout.on
                     and not bailFromSession
@@ -321,8 +300,8 @@ mainLoopThread = create_tick_handler(function()
             end
         end
 
-        if #players_to_log > 0 then
-            write_to_log_file(log__content, players_to_log)
+        if #player_entries_to_log > 0 then
+            write_to_log_file(log__content, player_entries_to_log)
         end
 
         if bailFromSession then
