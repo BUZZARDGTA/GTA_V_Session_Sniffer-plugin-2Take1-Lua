@@ -8,14 +8,14 @@
 
 ## Screenshots
 
-### <div align="center">Menu:</div>
+### <div align="center">Plugin Menu:</div>
 
-| GTA V SS Menu | Settings | Log File |
-| ------------- | -------- | -------- |
-| ![GTA V SS Menu](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/951b28ee-f428-4599-9bff-11e4465ac47b) | ![Settings](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/d60f25f6-9012-4781-b494-953212b97046) | ![Log File](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/05a5a64b-44a4-404c-9ef7-febd61851dd2)
+| GTA V Session Sniffer Menu | Settings |
+| -------------------------- | -------- |
+| ![GTA V Session Sniffer Menu](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/951b28ee-f428-4599-9bff-11e4465ac47b) | ![Settings](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/d60f25f6-9012-4781-b494-953212b97046) |
 
-### <div align="center">GTA V Session Sniffer (Usernames):</div>
+### <div align="center">App and Log:</div>
 
-<div align="center">
-  <img src="https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/54cbfc89-bede-4ae3-b1f9-ef95c8474b70" alt="GTA_V_Session_Sniffer" style="width: 35%;">
-</div>
+| GTA V Session Sniffer App | Log File |
+| ------------------------- | -------- |
+| ![GTA V SS Menu](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/54cbfc89-bede-4ae3-b1f9-ef95c8474b70) | ![Log File](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/05a5a64b-44a4-404c-9ef7-febd61851dd2) |
