@@ -1,4 +1,4 @@
-# GTA_V_Session_Sniffer-plugin-2Take1-Lua
+# GTA V Session Sniffer (2Take1 plugin)
 
 ### Allows you to automatically have every usernames showing up on [GTA V Session Sniffer](https://github.com/Illegal-Services/GTA-V-Session-Sniffer) project, by logging all players from your sessions to `scripts/GTA_V_Session_Sniffer-plugin/log.txt`.<br>
 
