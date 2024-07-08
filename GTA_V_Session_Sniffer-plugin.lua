@@ -9,7 +9,7 @@
 ---- Global constants 1/2 START
 local SCRIPT_NAME <const> = "GTA_V_Session_Sniffer-plugin.lua"
 local SCRIPT_TITLE <const> = "GTA V Session Sniffer"
-local LOGGING_PATH <const> = "scripts/GTA_V_Session_Sniffer-plugin/log.txt"
+local LOG_PATH <const> = "scripts/GTA_V_Session_Sniffer-plugin/log.txt"
 local FAKE_FRIENDS__PATH <const> = "cfg/scid.cfg"
 local FAKE_FRIENDS__MASKS = {
     STALK = {
@@ -29,6 +29,7 @@ local FAKE_FRIENDS__MASKS = {
         name = "Friend List",
     }
 }
+local FAKE_FRIENDS__ENTRY_PATTERN = "^([%w._-]+):(%x+):(%x+)" -- Define the patterns with capturing groups
 ---- Global constants 1/2 END
 
 ---- Global variables START
@@ -63,6 +64,31 @@ local function checkBit(hexFlag, mask)
     local flagValue = tonumber(hexFlag, 16)
     return flagValue ~= nil and (flagValue & mask == mask)
 end
+
+-- Function to read lines from a file and return them as a table
+function read_file_lines(file_path)
+    -- Attempt to open the file in read mode
+    local file, err = io.open(file_path, "r")
+    if err then
+        -- Return nil and the error message if there is an error opening the file
+        return nil, err
+    end
+
+    -- Initialize a table to store the file lines
+    local lines_table = {}
+
+    -- Read each line from the file and insert it into the table
+    for line in file:lines() do
+        lines_table[#lines_table + 1] = line
+    end
+
+    -- Close the file after reading
+    file:close()
+
+    -- Return the table containing the file lines and no error
+    return lines_table, nil
+end
+
 
 local function dec_to_ipv4(ip)
 	return string.format("%i.%i.%i.%i", ip >> 24 & 255, ip >> 16 & 255, ip >> 8 & 255, ip & 255)
@@ -158,14 +184,9 @@ menu.add_feature("       " .. string.rep(" -", 23), "action", myRootMenu.id)
 local settingsMenu = menu.add_feature("Settings", "parent", myRootMenu.id)
 settingsMenu.hint = "Options for the script."
 
-local settingBailOnBlacklisted = menu.add_feature('"Bail/Netsplit" from Fake Friend "Join Timeout" Users', "toggle", settingsMenu.id)
-settingBailOnBlacklisted.hint = 'When a Fake Friend "Join Timeout" flagged user is met, you will be desync from the rest of players, and thus be left alone in a solo public lobby.'
-settingBailOnBlacklisted.on = false
-
-
--- === Player-Specific Features === --
--- TODO:
--- Add an option that blacklist an user, automatically.
+local settingBailOnFakeFriendJoinTimeout = menu.add_feature('"Bail/Netsplit" from Fake Friend "Join Timeout" Users', "toggle", settingsMenu.id)
+settingBailOnFakeFriendJoinTimeout.hint = 'When a Fake Friend "Join Timeout" flagged user is met, you will be desync from the rest of players, and thus be left alone in a solo public lobby.'
+settingBailOnFakeFriendJoinTimeout.on = false
 
 
 -- === Main Loop === --
@@ -198,35 +219,17 @@ mainLoopThread = create_tick_handler(function()
         })
     end
 
-    local function bailPreTask(playerName, playerSCID)
+    local function bailPreTask(fake_friends__lines, playerName, playerSCID)
         if not utils.file_exists(FAKE_FRIENDS__PATH) then
             return false
         end
 
         local playerHexSCID = string.format("0x%x", playerSCID)
 
-        -- Read current blacklist file content
-        local fakeFriends_file, err = io.open(FAKE_FRIENDS__PATH, "r")
-        if err then
-            menu.notify("Oh no... Script crashed:(\nYou gotta restart it manually.", SCRIPT_NAME, 6, COLOR.RED)
-            handle_script_exit()
-            return false
-        end
-
-        -- Read all lines into a table
-        local lines = {}
-        for line in fakeFriends_file:lines() do
-            lines[#lines + 1] = line
-        end
-        fakeFriends_file:close()
-
-        -- Define the patterns with capturing groups
-        local ffEntryPattern = "^([%w._-]+):(%x+):(%x+)"
-
         -- Iterate over each line in the table
-        for _, line in ipairs(lines) do
+        for _, line in ipairs(fake_friends__lines) do
             -- Check if the line matches the pattern
-            local username, hexSCID, hexFlag = line:match(ffEntryPattern)
+            local username, hexSCID, hexFlag = line:match(FAKE_FRIENDS__ENTRY_PATTERN)
             if (
                 username == playerName
                 or hexSCID == playerHexSCID
@@ -240,28 +243,26 @@ mainLoopThread = create_tick_handler(function()
         return false
     end
 
-    local function write_to_log_file(players_to_log)
-        if not utils.file_exists(LOGGING_PATH) then
-            create_empty_file(LOGGING_PATH)
+    local function write_to_log_file(log__lines, players_to_log)
+        if not utils.file_exists(LOG_PATH) then
+            create_empty_file(LOG_PATH)
         end
-
-        -- Read current log file content
-        local log_file, err = io.open(LOGGING_PATH, "r")
-        if err then
-            menu.notify("Oh no... Script crashed:(\nYou gotta restart it manually.", SCRIPT_NAME, 6, COLOR.RED)
-            handle_script_exit()
-            return
-        end
-
-        local log_content = log_file:read("*all")
-        log_file:close()
 
         -- Prepare entries to add
         local entries_to_add = {}
         for _, player in ipairs(players_to_log) do
-            local entry = string.format("user:%s, ip:%s, scid:%s, timestamp:", player.Name, player.IP, player.SCID)
-            if not log_content or not log_content:find(entry, 1, true) then
-                table.insert(entries_to_add, entry .. player.Timestamp)
+            local found_entry = false
+
+            for _, line in ipairs(log__lines) do
+                local entry_pattern = string.format("^user:(%s), ip:(%s), scid:(%%d+), timestamp:(%%d+)", escape_magic_characters(player.Name), escape_magic_characters(player.IP))
+                local username, IP, hexSCID, timestamp = line:match(entry_pattern)
+                if username then
+                    found_entry = true
+                end
+            end
+
+            if not found_entry then
+                table.insert(entries_to_add, string.format("user:%s, ip:%s, scid:%d, timestamp:%d", player.Name, player.IP, player.SCID, player.Timestamp))
             end
         end
 
@@ -271,7 +272,7 @@ mainLoopThread = create_tick_handler(function()
         end
 
         -- Write new entries to log file
-        local log_file, err = io.open(LOGGING_PATH, "a")
+        local log_file, err = io.open(LOG_PATH, "a")
         if err then
             menu.notify("Oh no... Script crashed:(\nYou gotta restart it manually.", SCRIPT_NAME, 6, COLOR.RED)
             handle_script_exit()
@@ -295,6 +296,22 @@ mainLoopThread = create_tick_handler(function()
         local players_to_log = {}
         local bailFromSession = false
 
+        -- Read current fake friends file content
+        local fake_friends__lines, err = read_file_lines(FAKE_FRIENDS__PATH)
+        if err then
+            menu.notify("Oh no... Script crashed:(\nYou gotta restart it manually.", SCRIPT_NAME, 6, COLOR.RED)
+            handle_script_exit()
+            return
+        end
+
+        -- Read current log file content
+        local log__lines, err = read_file_lines(LOG_PATH)
+        if err then
+            menu.notify("Oh no... Script crashed:(\nYou gotta restart it manually.", SCRIPT_NAME, 6, COLOR.RED)
+            handle_script_exit()
+            return
+        end
+
         for playerID = 0, 31 do
             system.yield()
 
@@ -308,22 +325,22 @@ mainLoopThread = create_tick_handler(function()
                 local currentTimestamp = os.time()
 
                 loggerPreTask(players_to_log, playerID, playerName, playerSCID, playerIP, currentTimestamp)
-                if not bailFromSession then
-                    bailFromSession = bailPreTask(playerName, playerSCID)
+                if
+                    settingBailOnFakeFriendJoinTimeout.on
+                    and not bailFromSession
+                then
+                    bailFromSession = bailPreTask(fake_friends__lines, playerName, playerSCID)
                 end
             end
         end
 
         if #players_to_log > 0 then
-            write_to_log_file(players_to_log)
+            write_to_log_file(log__lines, players_to_log)
         end
 
         if bailFromSession then
             bailFromSession = false
-
-            if settingBailOnBlacklisted.on then
-                bailFeat:toggle()
-            end
+            bailFeat:toggle()
         end
     else
         player_join__timestamps = {}
