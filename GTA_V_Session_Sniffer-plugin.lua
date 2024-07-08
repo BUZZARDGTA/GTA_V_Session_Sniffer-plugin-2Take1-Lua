@@ -213,8 +213,8 @@ mainLoopThread = create_tick_handler(function()
         table.insert(players_to_log, {
             ID = playerID,
             Name = playerName,
-            IP = playerIP,
             SCID = playerSCID,
+            IP = playerIP,
             Timestamp = currentTimestamp
         })
     end
@@ -251,10 +251,12 @@ mainLoopThread = create_tick_handler(function()
         -- Prepare entries to add
         local entries_to_add = {}
         for _, player in ipairs(players_to_log) do
+            system.yield()
+
             local found_entry = false
 
             for _, line in ipairs(log__lines) do
-                local entry_pattern = string.format("^user:(%s), ip:(%s), scid:(%%d+), timestamp:(%%d+)", escape_magic_characters(player.Name), escape_magic_characters(player.IP))
+                local entry_pattern = string.format("^user:(%s), scid:(%%d+), ip:(%s), timestamp:(%%d+)", escape_magic_characters(player.Name), escape_magic_characters(player.IP))
                 local username, IP, hexSCID, timestamp = line:match(entry_pattern)
                 if username then
                     found_entry = true
@@ -262,7 +264,7 @@ mainLoopThread = create_tick_handler(function()
             end
 
             if not found_entry then
-                table.insert(entries_to_add, string.format("user:%s, ip:%s, scid:%d, timestamp:%d", player.Name, player.IP, player.SCID, player.Timestamp))
+                table.insert(entries_to_add, string.format("user:%s, scid:%d, ip:%s, timestamp:%d", player.Name, player.SCID, player.IP, player.Timestamp))
             end
         end
 
