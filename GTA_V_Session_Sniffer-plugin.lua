@@ -1,8 +1,7 @@
 -- Author: IB_U_Z_Z_A_R_Dl
 -- Description: Plugin for GTA V Session Sniffer project on GitHub.
--- Allows you to have every usernames showing up on GTA V Session Sniffer.
--- It logs every players from your sessions in "scripts/GTA_V_Session_Sniffer-plugin/log.txt".
--- If a Fake Friend "Join Timeout" flagged user is met, automatically "Bail/Netsplit" you from the session.
+-- Allows you to automatically have every usernames showing up on GTA V Session Sniffer project, by logging all players from your sessions to "scripts/GTA_V_Session_Sniffer-plugin/log.txt".
+-- Additionally, there's a feature that if you encounter a user flagged as a "Fake Friend" with "Join Timeout" flag, it automatically "Bail/Netsplit" you from the session.
 -- GitHub Repository: https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua
 
 
