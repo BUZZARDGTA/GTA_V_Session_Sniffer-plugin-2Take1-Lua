@@ -296,6 +296,8 @@ mainLoopThread = create_tick_handler(function()
         local bailFromSession = false
 
         for playerID = 0, 31 do
+            system.yield()
+
             if
                 player.is_player_valid(playerID)
                 and playerID ~= player.player_id()
