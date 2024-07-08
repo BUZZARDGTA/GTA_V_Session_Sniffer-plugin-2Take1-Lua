@@ -65,30 +65,19 @@ local function checkBit(hexFlag, mask)
     return flagValue ~= nil and (flagValue & mask == mask)
 end
 
--- Function to read lines from a file and return them as a table
-function read_file_lines(file_path)
-    -- Attempt to open the file in read mode
+-- Function to read the entire file into a single string
+function read_file(file_path)
     local file, err = io.open(file_path, "r")
     if err then
-        -- Return nil and the error message if there is an error opening the file
         return nil, err
     end
 
-    -- Initialize a table to store the file lines
-    local lines_table = {}
+    local content = file:read("*a")
 
-    -- Read each line from the file and insert it into the table
-    for line in file:lines() do
-        lines_table[#lines_table + 1] = line
-    end
-
-    -- Close the file after reading
     file:close()
 
-    -- Return the table containing the file lines and no error
-    return lines_table, nil
+    return content, nil
 end
-
 
 local function dec_to_ipv4(ip)
 	return string.format("%i.%i.%i.%i", ip >> 24 & 255, ip >> 16 & 255, ip >> 8 & 255, ip & 255)
@@ -219,15 +208,15 @@ mainLoopThread = create_tick_handler(function()
         })
     end
 
-    local function bailPreTask(fake_friends__lines, playerName, playerSCID)
+    local function bailPreTask(fake_friends__content, playerName, playerSCID)
         if not utils.file_exists(FAKE_FRIENDS__PATH) then
             return false
         end
 
         local playerHexSCID = string.format("0x%x", playerSCID)
 
-        -- Iterate over each line in the table
-        for _, line in ipairs(fake_friends__lines) do
+        -- Iterate over each line in the file
+        for line in fake_friends__content:gmatch("[^\r\n]+") do
             -- Check if the line matches the pattern
             local username, hexSCID, hexFlag = line:match(FAKE_FRIENDS__ENTRY_PATTERN)
             if (
@@ -243,7 +232,7 @@ mainLoopThread = create_tick_handler(function()
         return false
     end
 
-    local function write_to_log_file(log__lines, players_to_log)
+    local function write_to_log_file(log__content, players_to_log)
         if not utils.file_exists(LOG_PATH) then
             create_empty_file(LOG_PATH)
         end
@@ -255,15 +244,11 @@ mainLoopThread = create_tick_handler(function()
 
             local found_entry = false
 
-            for _, line in ipairs(log__lines) do
-                local entry_pattern = string.format("^user:(%s), scid:(%%d+), ip:(%s), timestamp:(%%d+)", escape_magic_characters(player.Name), escape_magic_characters(player.IP))
-                local username, IP, hexSCID, timestamp = line:match(entry_pattern)
-                if username then
-                    found_entry = true
-                end
-            end
-
-            if not found_entry then
+            local entry_pattern = string.format("user:(%s), scid:(%%d+), ip:(%s), timestamp:(%%d+)", escape_magic_characters(player.Name), escape_magic_characters(player.IP))
+            if
+                not log__content:find("^" .. entry_pattern)
+                and not log__content:find("\n" .. entry_pattern)
+            then
                 table.insert(entries_to_add, string.format("user:%s, scid:%d, ip:%s, timestamp:%d", player.Name, player.SCID, player.IP, player.Timestamp))
             end
         end
@@ -299,7 +284,7 @@ mainLoopThread = create_tick_handler(function()
         local bailFromSession = false
 
         -- Read current fake friends file content
-        local fake_friends__lines, err = read_file_lines(FAKE_FRIENDS__PATH)
+        local fake_friends__content, err = read_file(FAKE_FRIENDS__PATH)
         if err then
             menu.notify("Oh no... Script crashed:(\nYou gotta restart it manually.", SCRIPT_NAME, 6, COLOR.RED)
             handle_script_exit()
@@ -307,7 +292,7 @@ mainLoopThread = create_tick_handler(function()
         end
 
         -- Read current log file content
-        local log__lines, err = read_file_lines(LOG_PATH)
+        local log__content, err = read_file(LOG_PATH)
         if err then
             menu.notify("Oh no... Script crashed:(\nYou gotta restart it manually.", SCRIPT_NAME, 6, COLOR.RED)
             handle_script_exit()
@@ -331,13 +316,13 @@ mainLoopThread = create_tick_handler(function()
                     settingBailOnFakeFriendJoinTimeout.on
                     and not bailFromSession
                 then
-                    bailFromSession = bailPreTask(fake_friends__lines, playerName, playerSCID)
+                    bailFromSession = bailPreTask(fake_friends__content, playerName, playerSCID)
                 end
             end
         end
 
         if #players_to_log > 0 then
-            write_to_log_file(log__lines, players_to_log)
+            write_to_log_file(log__content, players_to_log)
         end
 
         if bailFromSession then
