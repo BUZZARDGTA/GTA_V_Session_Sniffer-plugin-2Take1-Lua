@@ -199,7 +199,7 @@ mainLoopThread = create_tick_handler(function()
             return
         end
 
-        local entry_pattern = string.format("user:(%s), scid:(%%d+), ip:(%s), timestamp:(%%d+)", escape_magic_characters(playerName), escape_magic_characters(playerIP))
+        local entry_pattern = string.format("user:(%s), scid:(%d), ip:(%s), timestamp:(%%d+)", escape_magic_characters(playerName), playerSCID, escape_magic_characters(playerIP))
         if
             not log__content:find("^" .. entry_pattern)
             and not log__content:find("\n" .. entry_pattern)
