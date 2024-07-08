@@ -219,13 +219,15 @@ mainLoopThread = create_tick_handler(function()
         for line in fake_friends__content:gmatch("[^\r\n]+") do
             -- Check if the line matches the pattern
             local username, hexSCID, hexFlag = line:match(FAKE_FRIENDS__ENTRY_PATTERN)
-            if (
-                username == playerName
-                or hexSCID == playerHexSCID
-            ) and (
-                checkBit(hexFlag, FAKE_FRIENDS__MASKS.JOIN_TIMEOUT.hexValue)
-            ) then
-                return true
+            if username then
+                if (
+                    username == playerName
+                    or hexSCID == playerHexSCID
+                ) and (
+                    checkBit(hexFlag, FAKE_FRIENDS__MASKS.JOIN_TIMEOUT.hexValue)
+                ) then
+                    return true
+                end
             end
         end
 
