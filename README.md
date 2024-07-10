@@ -12,7 +12,7 @@
 
 | GTA V Session Sniffer Menu | Settings |
 | -------------------------- | -------- |
-| ![GTA V Session Sniffer Menu](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/951b28ee-f428-4599-9bff-11e4465ac47b) | ![Settings](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/d60f25f6-9012-4781-b494-953212b97046) |
+| ![GTA V Session Sniffer Menu](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/cbe9e4e2-7c74-43d7-8d5a-90a443a873ec) | ![Settings](https://github.com/Illegal-Services/GTA_V_Session_Sniffer-plugin-2Take1-Lua/assets/62464560/bfdc5881-a177-4d3a-8e17-9cd160637948) |
 
 ### <div align="center">App and Log:</div>
 
