@@ -82,11 +82,7 @@ local function checkBit(hexFlag, mask)
 end
 
 local function pluralize(word, count)
-    if count > 1 then
-        return word .. "s"
-    else
-        return word
-    end
+    return word .. (count > 1 and "s" or "")
 end
 
 local function ends_with_newline(str)
@@ -150,7 +146,7 @@ local function create_tick_handler(handler)
     end)
 end
 
-local function is_thread_runnning(threadId)
+local function is_thread_running(threadId)
     if threadId and not menu.has_thread_finished(threadId) then
         return true
     end
@@ -186,7 +182,7 @@ local function handle_script_exit(params)
     scriptExitEventListener = remove_event_listener("exit", scriptExitEventListener)
     playerLeaveEventListener = remove_event_listener("exit", playerLeaveEventListener)
 
-    if is_thread_runnning(scriptsListThread) then
+    if is_thread_running(scriptsListThread) then
         scriptsListThread = delete_thread(scriptsListThread)
     end
 
@@ -377,7 +373,7 @@ end
 ---- Global functions 2/2 END
 
 ---- Global event listeners START
-scriptExitEventListener = event.add_event_listener("exit", function(f)
+scriptExitEventListener = event.add_event_listener("exit", function()
     handle_script_exit({ clearAllNotifications = true })
 end)
 playerLeaveEventListener = event.add_event_listener("player_leave", function(f)
@@ -387,6 +383,7 @@ end)
 -- Globals END
 
 
+-- Permissions Startup Checking START
 local unnecessaryPermissions = {}
 local missingPermissions = {}
 
@@ -403,22 +400,16 @@ for _, flag in ipairs(TRUSTED_FLAGS) do
 end
 
 if #unnecessaryPermissions > 0 then
-    local unnecessaryPermissionsMessage = "You do not require the following " .. pluralize("permission", #unnecessaryPermissions) .. ":\n"
-    for _, permission in ipairs(unnecessaryPermissions) do
-        unnecessaryPermissionsMessage = unnecessaryPermissionsMessage .. permission .. "\n"
-    end
-    menu.notify(unnecessaryPermissionsMessage, SCRIPT_NAME, 6, COLOR.ORANGE)
+    menu.notify("You do not require the following " .. pluralize("permission", #unnecessaryPermissions) .. ":\n" .. table.concat(unnecessaryPermissions, "\n"),
+        SCRIPT_NAME, 6, COLOR.ORANGE)
 end
-
 if #missingPermissions > 0 then
-    local missingPermissionsMessage = "You need to enable the following " .. pluralize("permission", #missingPermissions) .. ":\n"
-    for _, permission in ipairs(missingPermissions) do
-        missingPermissionsMessage = missingPermissionsMessage .. permission .. "\n"
-    end
-    menu.notify(missingPermissionsMessage, SCRIPT_NAME, 6, COLOR.RED)
-
+    menu.notify(
+        "You need to enable the following " .. pluralize("permission", #missingPermissions) .. ":\n" .. table.concat(missingPermissions, "\n"),
+        SCRIPT_NAME, 6, COLOR.RED)
     handle_script_exit()
 end
+-- Permissions Startup Checking END
 
 
 -- === Main Menu Features === --
@@ -527,10 +518,7 @@ mainLoopThread = create_tick_handler(function()
         log_file:close()
     end
 
-    if
-        network.is_session_started()
-        and player.get_host() ~= -1
-    then
+    if network.is_session_started() and player.get_host() ~= -1 then
         local player_entries_to_log = {}
         local bailFromSession = false
 
